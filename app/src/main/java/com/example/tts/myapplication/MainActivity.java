@@ -11,14 +11,24 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.FrameLayout;
+import android.widget.ListView;
 
 import static android.R.attr.orientation;
 
 public class MainActivity extends AppCompatActivity {
+    Integer[] imageId = {
+            R.drawable.rsz_20160731_101852,
+            R.drawable.rsz_20160820_083712,
+            R.drawable.rsz_20160820_083749,
+            R.drawable.rsz_20160820_084236,
+            R.drawable.rsz_20160820_121959,
+    };
 
     ClippingImageView animatingImageView;
     FrameLayout main;
+    ListView list;
     float[][] animationValues = new float[2][8];
 
     boolean isStatusBar = (Build.VERSION.SDK_INT >= 21);
@@ -29,15 +39,19 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        CustomList adapter = new CustomList(MainActivity.this, imageId);
+        list = (ListView) findViewById(R.id.list);
+        list.setAdapter(adapter);
+        list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                openPhoto(new Rect(0,0,376,211), BitmapFactory.decodeResource(getResources(), R.drawable.full));
+            }
+        });
+
         AndroidUtilities.checkDisplaySize(this, getResources().getConfiguration());
         main = (FrameLayout) findViewById(R.id.activity_main);
 
-//        AvatarDrawable avatarDrawable = new AvatarDrawable();
-//        BackupImageView avatarImage = (BackupImageView) findViewById(R.id.avatar_image);
-//        avatarImage.setRoundRadius(AndroidUtilities.dp(16));
-//        avatarImage.setPivotX(0);
-//        avatarImage.setPivotY(0);
-//        avatarImage.setImage("/storage/emulated/0/test.png", avatarDrawable);
         animatingImageView = new ClippingImageView(this);
         animatingImageView.setAnimationValues(animationValues);
         ViewGroup.LayoutParams param = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);

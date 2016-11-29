@@ -8,10 +8,11 @@
     tools:context="com.example.tts.myapplication.MainActivity">
 
 
-    <!--<com.example.tts.myapplication.ClippingImageView-->
-        <!--android:id="@+id/image_view"-->
-        <!--android:src="@drawable/photo_w"-->
-        <!--android:layout_width="900dp"-->
-        <!--android:layout_height="960dp"/>-->
+    <ListView
+        android:id="@+id/list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+    </ListView>
 
 </FrameLayout>
