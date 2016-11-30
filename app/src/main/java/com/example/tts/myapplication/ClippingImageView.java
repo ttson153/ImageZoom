@@ -69,7 +69,7 @@ public class ClippingImageView extends View {
         setClipHorizontal((int) (animationValues[0][4] + (animationValues[1][4] - animationValues[0][4]) * animationProgress));
         setClipTop((int) (animationValues[0][5] + (animationValues[1][5] - animationValues[0][5]) * animationProgress));
         setClipBottom((int) (animationValues[0][6] + (animationValues[1][6] - animationValues[0][6]) * animationProgress));
-        setRadius((int) (animationValues[0][7] + (animationValues[1][7] - animationValues[0][7]) * animationProgress));
+//        setRadius((int) (animationValues[0][7] + (animationValues[1][7] - animationValues[0][7]) * animationProgress));
 
 //        for (float[] row : animationValues) {
 //            for (float elem : row) {

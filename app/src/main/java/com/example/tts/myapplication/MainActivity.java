@@ -9,6 +9,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -38,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        final Rect drawRegion = new Rect(139,11,517,223);
 
         CustomList adapter = new CustomList(MainActivity.this, imageId);
         list = (ListView) findViewById(R.id.list);
@@ -45,7 +47,9 @@ public class MainActivity extends AppCompatActivity {
         list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                openPhoto(new Rect(0,0,376,211), BitmapFactory.decodeResource(getResources(), R.drawable.full));
+                FrameLayout row = (FrameLayout) view;
+                ClippingImageView animatingImageView = (ClippingImageView) row.getChildAt(0);
+                openPhoto(drawRegion, animatingImageView, row, BitmapFactory.decodeResource(getResources(), R.drawable.full));
             }
         });
 
@@ -54,18 +58,18 @@ public class MainActivity extends AppCompatActivity {
 
         animatingImageView = new ClippingImageView(this);
         animatingImageView.setAnimationValues(animationValues);
-        ViewGroup.LayoutParams param = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        animatingImageView.setLayoutParams(param);
 
         animatingImageView.setImageBitmap(BitmapFactory.decodeResource(getResources(), R.drawable.thumb));
         animatingImageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                openPhoto(new Rect(0,0,376,211), BitmapFactory.decodeResource(getResources(), R.drawable.full));
+                openPhoto(drawRegion, (ClippingImageView) view, main, BitmapFactory.decodeResource(getResources(), R.drawable.full));
             }
         });
 
-        main.addView(animatingImageView, new FrameLayout.LayoutParams(376, 211));
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(376, 211);
+        params.gravity = Gravity.TOP|Gravity.RIGHT;
+        main.addView(animatingImageView, params);
     }
 
     public class PlaceHolder {
@@ -87,9 +91,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void openPhoto(Rect drawRegion, Bitmap fullImage) {
+    private void openPhoto(Rect drawRegion, ClippingImageView animatingImageView, FrameLayout parent, Bitmap fullImage) {
         //Rect drawRegion = new Rect(139,11,517,223);
         PlaceHolder object = new PlaceHolder();
+
+        animatingImageView.layout(0,0,540,960);
+        animatingImageView.setAnimationValues(animationValues);
 
         animatingImageView.setVisibility(View.VISIBLE);
         animatingImageView.setRadius(object.radius);
@@ -102,11 +109,11 @@ public class MainActivity extends AppCompatActivity {
         animatingImageView.setPivotY(0.0f);
         animatingImageView.setScaleX(object.scale);
         animatingImageView.setScaleY(object.scale);
-        animatingImageView.setTranslationX(object.viewX + drawRegion.left * object.scale);
-        animatingImageView.setTranslationY(object.viewY + drawRegion.top * object.scale);
+//        animatingImageView.setTranslationX(object.viewX + drawRegion.left * object.scale);
+//        animatingImageView.setTranslationY(object.viewY + drawRegion.top * object.scale);
         final ViewGroup.LayoutParams layoutParams = animatingImageView.getLayoutParams();
         layoutParams.width = (drawRegion.right - drawRegion.left);
-        //layoutParams.width = 380;
+//        layoutParams.width = 380;
         layoutParams.height = (drawRegion.bottom - drawRegion.top);
         animatingImageView.setLayoutParams(layoutParams);
 
@@ -121,22 +128,25 @@ public class MainActivity extends AppCompatActivity {
 //        int clipVertical = Math.abs(drawRegion.top - object.imageReceiver.getImageY());
 
         int coords2[] = new int[2];
-        main.getLocationInWindow(coords2);
+        parent.getLocationInWindow(coords2);
         int clipTop = coords2[1] - (isStatusBar ? 0 : AndroidUtilities.statusBarHeight) - (object.viewY + drawRegion.top) + object.clipTopAddition;
         if (clipTop < 0) {
             clipTop = 0;
         }
-        int clipBottom = (object.viewY + drawRegion.top + layoutParams.height) - (coords2[1] + main.getHeight() - (isStatusBar ? 0 : AndroidUtilities.statusBarHeight)) + object.clipBottomAddition;
+        int clipBottom = (object.viewY + drawRegion.top + layoutParams.height) - (coords2[1] + parent.getHeight() - (isStatusBar ? 0 : AndroidUtilities.statusBarHeight)) + object.clipBottomAddition;
         if (clipBottom < 0) {
             clipBottom = 0;
         }
+        clipBottom = 0;
 //        clipTop = Math.max(clipTop, clipVertical);
 //        clipBottom = Math.max(clipBottom, clipVertical);
 
         animationValues[0][0] = animatingImageView.getScaleX();
         animationValues[0][1] = animatingImageView.getScaleY();
-        animationValues[0][2] = animatingImageView.getTranslationX();
-        animationValues[0][3] = animatingImageView.getTranslationY();
+//        animationValues[0][2] = animatingImageView.getTranslationX();
+//        animationValues[0][3] = animatingImageView.getTranslationY();
+        animationValues[0][2] = coords2[0] + animatingImageView.getLeft();
+        animationValues[0][3] = coords2[1] + animatingImageView.getTop();
 //        animationValues[0][4] = clipHorizontal * object.scale;
         animationValues[0][5] = clipTop * object.scale;
         animationValues[0][6] = clipBottom * object.scale;
@@ -157,13 +167,13 @@ public class MainActivity extends AppCompatActivity {
         animatingImageView.setAnimationProgress(0);
 //        backgroundDrawable.setAlpha(0);
 //        containerView.setAlpha(0);
-//        main.setAlpha(0);
+//        parent.setAlpha(0);
 
         final AnimatorSet animatorSet = new AnimatorSet();
         animatorSet.playTogether(
                 ObjectAnimator.ofFloat(animatingImageView, "animationProgress", 0.0f, 1.0f)
 //                ObjectAnimator.ofInt(backgroundDrawable, "alpha", 0, 255),
-//                ObjectAnimator.ofFloat(main, "alpha", 0.0f, 1.0f)
+//                ObjectAnimator.ofFloat(parent, "alpha", 0.0f, 1.0f)
         );
         animatorSet.setDuration(1500);
         animatorSet.start();
