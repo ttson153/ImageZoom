@@ -7,6 +7,7 @@ import android.graphics.Point;
 import android.graphics.RectF;
 import android.util.DisplayMetrics;
 import android.view.Display;
+import android.view.View;
 import android.view.WindowManager;
 
 /**
@@ -19,6 +20,7 @@ public class AndroidUtilities {
     public static int statusBarHeight = 24;
     public static DisplayMetrics displayMetrics = new DisplayMetrics();
     public static Point displaySize = new Point();
+    public static Point displaySizePixel = new Point();
 
     static {
         checkDisplaySize(MyApplication.getAppContext(), null);
@@ -31,9 +33,26 @@ public class AndroidUtilities {
         return (int) Math.ceil(density * value);
     }
 
+    public static int getRelativeLeft(View myView) {
+        if (myView.getParent() == myView.getRootView())
+            return myView.getLeft();
+        else
+            return myView.getLeft() + getRelativeLeft((View) myView.getParent());
+    }
+
+    public static int getRelativeTop(View myView) {
+        if (myView.getParent() == myView.getRootView())
+            return myView.getTop();
+        else
+            return myView.getTop() + getRelativeTop((View) myView.getParent());
+    }
+
     public static void checkDisplaySize(Context context, Configuration newConfiguration) {
         try {
             density = context.getResources().getDisplayMetrics().density;
+            displaySizePixel.x = context.getResources().getDisplayMetrics().widthPixels;
+            displaySizePixel.y = context.getResources().getDisplayMetrics().heightPixels;
+
             Configuration configuration = newConfiguration;
             if (configuration == null) {
                 configuration = context.getResources().getConfiguration();
