@@ -17,14 +17,14 @@ import android.widget.ImageView;
  * Created by tts on 11/30/16.
  */
 
-public class CustomList extends ArrayAdapter<String> {
+public class ListViewAdapter extends ArrayAdapter<String> {
     private final Activity context;
     private final Integer[] imageId;
 
     private int previewWidth = AndroidUtilities.dp(250);
     private int previewHeight = AndroidUtilities.dp(140);
 
-    public CustomList(Activity context, Integer[] imageId) {
+    public ListViewAdapter(Activity context, Integer[] imageId) {
         super(context, R.layout.list_item);
         this.context = context;
         this.imageId = imageId;

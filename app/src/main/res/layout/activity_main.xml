@@ -8,14 +8,27 @@
     tools:context="com.example.tts.myapplication.MainActivity">
 
 
-
-
-    <ListView
-        android:id="@+id/list"
+    <LinearLayout
+        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="match_parent">
 
-    </ListView>
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_weight="0"
+            android:background="#FF0000FF">
+
+        </FrameLayout>
+
+        <ListView
+            android:id="@+id/list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1">
+
+        </ListView>
+    </LinearLayout>
 
     <FrameLayout
         android:id="@+id/animation_layout"

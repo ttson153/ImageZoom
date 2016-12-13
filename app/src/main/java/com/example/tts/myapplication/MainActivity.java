@@ -7,7 +7,6 @@ import android.animation.ObjectAnimator;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -27,24 +26,28 @@ public class MainActivity extends AppCompatActivity {
             R.drawable.rsz_20160820_083749,
             R.drawable.rsz_20160820_084236,
             R.drawable.rsz_20160820_121959,
-            R.drawable.square
+            R.drawable.square,
+            R.drawable.fourbythree,
     };
 
     FrameLayout animatingLayout;
     ImageView stillImageView;
     Rect drawRegion;
     ClippingImageView animatingImageView;
+    PlaceHolder currentPlaceHolder;
     FrameLayout main;
     ListView list;
     float[][] animationValues = new float[2][8];
 
     private ColorDrawable backgroundDrawable = new ColorDrawable(0xff000000);
 
-    boolean isStatusBar = (Build.VERSION.SDK_INT >= 21);
+//    boolean isStatusBar = (Build.VERSION.SDK_INT >= 21);
+    boolean isStatusBar = false;
 
     int statusBarHeight;
 
     private boolean zoomIn = false;
+    private long animatingDuration = 1000;
 
 
     @Override
@@ -61,8 +64,7 @@ public class MainActivity extends AppCompatActivity {
         animatingLayout.addView(animatingImageView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         final int[] imgViewLocation = new int[2];
-
-        CustomList adapter = new CustomList(MainActivity.this, imageId);
+        ListViewAdapter adapter = new ListViewAdapter(MainActivity.this, imageId);
         list = (ListView) findViewById(R.id.list);
         list.setAdapter(adapter);
         list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -70,8 +72,10 @@ public class MainActivity extends AppCompatActivity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 stillImageView = (ImageView) ((FrameLayout) view).getChildAt(0);
                 stillImageView.getLocationInWindow(imgViewLocation);
-                int right = imgViewLocation[0] + stillImageView.getWidth();
-                int bottom = imgViewLocation[1] + stillImageView.getHeight();
+                int left = imgViewLocation[0];
+                int top = imgViewLocation[1];
+                int right = left + stillImageView.getWidth();
+                int bottom = top + stillImageView.getHeight();
                 Log.d("Loc ", imgViewLocation[0] + " " + imgViewLocation[1] + " " + right + " " + bottom);
 
                 stillImageView.buildDrawingCache();
@@ -85,55 +89,23 @@ public class MainActivity extends AppCompatActivity {
                 params.height = stillImageView.getHeight();
                 animatingImageView.setLayoutParams(params);
 
-                drawRegion = new Rect(imgViewLocation[0], imgViewLocation[1], right, bottom);
+                drawRegion = new Rect(left, top, right, bottom);
                 if (position == 5) {
-                    openPhoto(drawRegion, animatingImageView, animatingLayout, null, new PlaceHolder(bm, AndroidUtilities.dp(50)));
+                    currentPlaceHolder = new PlaceHolder(bm, params.width / 2);
                 }
                 else {
-                    openPhoto(drawRegion, animatingImageView, animatingLayout, null, new PlaceHolder(bm, AndroidUtilities.dp(2)));
+                    currentPlaceHolder = new PlaceHolder(bm, AndroidUtilities.dp(2));
                 }
+
+                openPhoto(drawRegion, animatingImageView, animatingLayout, null, currentPlaceHolder);
             }
         });
-
-
-//        AndroidUtilities.checkDisplaySize(this, getResources().getConfiguration());
-//        main = (FrameLayout) findViewById(R.id.main_frame_layout);
-//        backgroundDrawable.setAlpha(0);
-//        main.setBackgroundDrawable(backgroundDrawable);
-//        animatingImageView = new ClippingImageView(this);
-//        Bitmap thumb = BitmapFactory.decodeResource(getResources(), R.drawable.rsz_20160731_101852);
-//        animatingImageView.setImageBitmap(thumb);
-//
-//        main.addView(animatingImageView, new FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
-//        animatingImageView.setTranslationX(AndroidUtilities.dp(100));
-//        animatingImageView.setTranslationY(AndroidUtilities.dp(-100));
-//        ViewGroup.LayoutParams params = animatingImageView.getLayoutParams();
-//        params.width = AndroidUtilities.dp(320);
-//        params.height = AndroidUtilities.dp(180);
-//        animatingImageView.setLayoutParams(params);
-//        //imageView.setScaleType(ImageView.ScaleType.FIT_XY);
-//        animatingImageView.invalidate();
-//
-//        final Rect drawRegion = new Rect((int) animatingImageView.getTranslationX(), (int) animatingImageView.getTranslationY(),
-//                (int) animatingImageView.getTranslationX() + animatingImageView.getWidth(), (int) animatingImageView.getTranslationY() + animatingImageView.getHeight());
-//
-//        animatingImageView.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                openPhoto(new Rect((int) animatingImageView.getTranslationX(), (int) animatingImageView.getTranslationY(),
-//                        (int) animatingImageView.getTranslationX() + animatingImageView.getWidth(), (int) animatingImageView.getTranslationY() + animatingImageView.getHeight()), animatingImageView, main, null);
-//            }
-//        });
-
-        Log.d("MyLog", "Screen Pixels: " + AndroidUtilities.displaySizePixel.x + " " + AndroidUtilities.displaySizePixel.y);
     }
 
     public class PlaceHolder {
         public int viewX;
         public int viewY;
         public Bitmap thumb;
-        public int dialogId;
-        public int index;
         public int size;
         public int radius;
         public int clipBottomAddition;
@@ -141,14 +113,13 @@ public class MainActivity extends AppCompatActivity {
         public float scale = 1.0f;
 
         PlaceHolder(Bitmap bitmap, int radius) {
-            viewX = 0; viewY = 372;
+//            viewX = 0; viewY = 372;
             this.radius = radius;
             thumb = bitmap;
         }
     }
 
     private void openPhoto(Rect drawRegion, final ClippingImageView animatingImageView, FrameLayout parent, Bitmap fullImage, PlaceHolder object) {
-        //Rect drawRegion = new Rect(139,11,517,223);
         zoomIn = true;
 
         animatingImageView.setAnimationValues(animationValues);
@@ -172,12 +143,12 @@ public class MainActivity extends AppCompatActivity {
         animatingImageView.setLayoutParams(layoutParams);
 
         float scaleX = (float) AndroidUtilities.displaySize.x / layoutParams.width;
-        float scaleY = (float) (AndroidUtilities.displaySize.y + (isStatusBar ? statusBarHeight : 0)) / layoutParams.height;
+        float scaleY = (float) (AndroidUtilities.displaySize.y + (isStatusBar ? 0 : statusBarHeight)) / layoutParams.height;
         float scale = scaleX > scaleY ? scaleY : scaleX;
         float width = layoutParams.width * scale;        //width  of full image
         float height = layoutParams.height * scale;      //height of full image
         float xPos = (AndroidUtilities.displaySize.x - width) / 2.0f;
-        float yPos = ((AndroidUtilities.displaySize.y + (isStatusBar ? statusBarHeight : 0)) - height) / 2.0f;
+        float yPos = ((AndroidUtilities.displaySize.y + (isStatusBar ? 0 : statusBarHeight)) - height) / 2.0f;
 //        int clipHorizontal = Math.abs(drawRegion.left - object.imageReceiver.getImageX());
 //        int clipVertical = Math.abs(drawRegion.top - object.imageReceiver.getImageY());
 
@@ -198,10 +169,11 @@ public class MainActivity extends AppCompatActivity {
 //        clipBottom = Math.max(clipBottom, clipVertical);
 
         if (drawRegion.bottom > AndroidUtilities.displaySize.y) {
-            clipBottom = drawRegion.bottom - (AndroidUtilities.displaySize.y + (isStatusBar ? statusBarHeight : 0));
+//            clipBottom = drawRegion.bottom - (AndroidUtilities.displaySize.y + (isStatusBar ? statusBarHeight : 0));
+            clipBottom = drawRegion.bottom - (AndroidUtilities.displaySizePixel.y);
         }
-        if (drawRegion.top < 0) {
-            clipTop = -drawRegion.top + (isStatusBar ? statusBarHeight : 0);
+        if (drawRegion.top < ((isStatusBar ? statusBarHeight : 0) + AndroidUtilities.dp(56))) {
+            clipTop = -drawRegion.top + (isStatusBar ? statusBarHeight : 0) + AndroidUtilities.dp(56);
         }
 
         animationValues[0][0] = animatingImageView.getScaleX();
@@ -254,13 +226,12 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        animatorSet.setDuration(2000);
+        animatorSet.setDuration(animatingDuration);
         animatorSet.start();
 
     }
 
     private void closePhoto(Rect drawRegion, final ClippingImageView animatingImageView, FrameLayout parent, Bitmap fullImage, PlaceHolder object) {
-        //Rect drawRegion = new Rect(139,11,517,223);
         zoomIn = false;
 
         final ViewGroup.LayoutParams layoutParams = animatingImageView.getLayoutParams();
@@ -269,12 +240,12 @@ public class MainActivity extends AppCompatActivity {
         animatingImageView.setLayoutParams(layoutParams);
 
         float scaleX = (float) AndroidUtilities.displaySize.x / layoutParams.width;
-        float scaleY = (float) (AndroidUtilities.displaySize.y + (isStatusBar ? statusBarHeight : 0)) / layoutParams.height;
+        float scaleY = (float) (AndroidUtilities.displaySize.y + (isStatusBar ? 0 : statusBarHeight)) / layoutParams.height;
         float scale = scaleX > scaleY ? scaleY : scaleX;
         float width = layoutParams.width * scale;        //width  of full image
         float height = layoutParams.height * scale;      //height of full image
         float xPos = (AndroidUtilities.displaySize.x - width) / 2.0f;
-        float yPos = ((AndroidUtilities.displaySize.y + (isStatusBar ? statusBarHeight : 0)) - height) / 2.0f;
+        float yPos = ((AndroidUtilities.displaySize.y + (isStatusBar ? 0 : statusBarHeight)) - height) / 2.0f;
 //        int clipHorizontal = Math.abs(drawRegion.left - object.imageReceiver.getImageX());
 //        int clipVertical = Math.abs(drawRegion.top - object.imageReceiver.getImageY());
 
@@ -295,10 +266,10 @@ public class MainActivity extends AppCompatActivity {
 //        clipBottom = Math.max(clipBottom, clipVertical);
 
         if (drawRegion.bottom > AndroidUtilities.displaySize.y) {
-            clipBottom = drawRegion.bottom - (AndroidUtilities.displaySize.y + (isStatusBar ? statusBarHeight : 0));
+            clipBottom = drawRegion.bottom - AndroidUtilities.displaySizePixel.y;
         }
-        if (drawRegion.top < 0) {
-            clipTop = -drawRegion.top + (isStatusBar ? statusBarHeight : 0);
+        if (drawRegion.top < ((isStatusBar ? statusBarHeight : 0) + AndroidUtilities.dp(56))) {
+            clipTop = -drawRegion.top + (isStatusBar ? statusBarHeight : 0) + AndroidUtilities.dp(56);
         }
 
         animationValues[0][0] = animatingImageView.getScaleX();
@@ -310,19 +281,11 @@ public class MainActivity extends AppCompatActivity {
         animationValues[0][6] = 0;
         animationValues[0][7] = 0;
 
-        Log.d("MyLog",  "Draw Region " + drawRegion.left + " " + drawRegion.top + " " + drawRegion.right + " " + drawRegion.bottom + " ");
-        Log.d("MyLog",  "layoutParam " + layoutParams.width + " " + layoutParams.height);
-        Log.d("MyLog",  "Clip Value "  + clipTop + " " + clipBottom);
-
-        animationValues[1][0] = 1.0f;
-        animationValues[1][1] = 1.0f;
+        animationValues[1][0] = object.scale;
+        animationValues[1][1] = object.scale;
         animationValues[1][2] = drawRegion.left;
         animationValues[1][3] = drawRegion.top - (isStatusBar ? statusBarHeight : 0);
-//        animationValues[0][2] = coords2[0] + animatingImageView.getLeft();
-//        animationValues[0][3] = coords2[1] + animatingImageView.getTop();
-//        animationValues[0][2] = animatingImageView.getLeft();
-//        animationValues[0][3] = animatingImageView.getTop();
-//        animationValues[0][4] = clipHorizontal * object.scale;
+//        animationValues[1][4] = clipHorizontal * object.scale;
         animationValues[1][5] = clipTop * object.scale;
         animationValues[1][6] = clipBottom * object.scale;
         animationValues[1][7] = object.radius;
@@ -330,7 +293,6 @@ public class MainActivity extends AppCompatActivity {
         animatingImageView.setAnimationProgress(0);
 //        backgroundDrawable.setAlpha(0);
 //        containerView.setAlpha(0);
-//        parent.setAlpha(0);
 
         Log.d("MyLog", "ClipIVSize  " + animatingImageView.getLeft() + " " + animatingImageView.getTop() + " " +
                 animatingImageView.getMeasuredWidth() + " " + animatingImageView.getMeasuredHeight() + " " +
@@ -352,7 +314,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        animatorSet.setDuration(2000);
+        animatorSet.setDuration(animatingDuration);
         animatorSet.start();
 
     }
@@ -360,7 +322,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         if (zoomIn) {
-            closePhoto(drawRegion, animatingImageView, animatingLayout, null, new PlaceHolder(null, AndroidUtilities.dp(0)));
+            closePhoto(drawRegion, animatingImageView, animatingLayout, null, currentPlaceHolder);
         }
         else {
             super.onBackPressed();
