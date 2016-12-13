@@ -6,6 +6,7 @@ import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.RectF;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
@@ -88,9 +89,9 @@ public class AndroidUtilities {
                     displaySize.y = newSize;
                 }
             }
-            //FileLog.e("tmessages", "display size = " + displaySize.x + " " + displaySize.y + " " + displayMetrics.xdpi + "x" + displayMetrics.ydpi);
+            Log.d("MyLog", "display size = " + displaySize.x + " " + displaySize.y + " " + displayMetrics.xdpi + "x" + displayMetrics.ydpi);
         } catch (Exception e) {
-            //FileLog.e("tmessages", e);
+            e.printStackTrace();
         }
     }
 
