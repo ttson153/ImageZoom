@@ -33,6 +33,15 @@ public class AndroidUtilities {
         return (int) Math.ceil(density * value);
     }
 
+    public static int getStatusBarHeight() {
+        int result = 0;
+        int resourceId = MyApplication.getAppContext().getResources().getIdentifier("status_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            result = MyApplication.getAppContext().getResources().getDimensionPixelSize(resourceId);
+        }
+        return result;
+    }
+
     public static int getRelativeLeft(View myView) {
         if (myView.getParent() == myView.getRootView())
             return myView.getLeft();
@@ -52,6 +61,7 @@ public class AndroidUtilities {
             density = context.getResources().getDisplayMetrics().density;
             displaySizePixel.x = context.getResources().getDisplayMetrics().widthPixels;
             displaySizePixel.y = context.getResources().getDisplayMetrics().heightPixels;
+            statusBarHeight = getStatusBarHeight();
 
             Configuration configuration = newConfiguration;
             if (configuration == null) {

@@ -27,10 +27,12 @@ public class MainActivity extends AppCompatActivity {
             R.drawable.rsz_20160820_083749,
             R.drawable.rsz_20160820_084236,
             R.drawable.rsz_20160820_121959,
+            R.drawable.square
     };
 
     FrameLayout animatingLayout;
-    ImageView staticImageView;
+    ImageView stillImageView;
+    Rect drawRegion;
     ClippingImageView animatingImageView;
     FrameLayout main;
     ListView list;
@@ -50,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        statusBarHeight = getStatusBarHeight();
+        statusBarHeight = AndroidUtilities.statusBarHeight;
 
         animatingLayout = (FrameLayout) findViewById(R.id.animation_layout);
         animatingImageView = new ClippingImageView(this);
@@ -66,25 +68,30 @@ public class MainActivity extends AppCompatActivity {
         list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                staticImageView = (ImageView) ((FrameLayout) view).getChildAt(0);
-                staticImageView.getLocationInWindow(imgViewLocation);
-                int right = imgViewLocation[0] + staticImageView.getWidth();
-                int bottom = imgViewLocation[1] + staticImageView.getHeight();
+                stillImageView = (ImageView) ((FrameLayout) view).getChildAt(0);
+                stillImageView.getLocationInWindow(imgViewLocation);
+                int right = imgViewLocation[0] + stillImageView.getWidth();
+                int bottom = imgViewLocation[1] + stillImageView.getHeight();
                 Log.d("Loc ", imgViewLocation[0] + " " + imgViewLocation[1] + " " + right + " " + bottom);
 
-                staticImageView.buildDrawingCache();
-                Bitmap bm = Bitmap.createBitmap(staticImageView.getDrawingCache());
-                staticImageView.destroyDrawingCache();
+                stillImageView.buildDrawingCache();
+                Bitmap bm = Bitmap.createBitmap(stillImageView.getDrawingCache());
+                stillImageView.destroyDrawingCache();
 
                 animatingImageView.setTranslationX(imgViewLocation[0]);
                 animatingImageView.setTranslationY(imgViewLocation[1]);
                 ViewGroup.LayoutParams params = animatingImageView.getLayoutParams();
-                params.width = staticImageView.getWidth();
-                params.height = staticImageView.getHeight();
+                params.width = stillImageView.getWidth();
+                params.height = stillImageView.getHeight();
                 animatingImageView.setLayoutParams(params);
 
-                Rect drawRegion = new Rect(imgViewLocation[0], imgViewLocation[1], right, bottom);
-                openPhoto(drawRegion, animatingImageView, animatingLayout, null, new PlaceHolder(bm));
+                drawRegion = new Rect(imgViewLocation[0], imgViewLocation[1], right, bottom);
+                if (position == 5) {
+                    openPhoto(drawRegion, animatingImageView, animatingLayout, null, new PlaceHolder(bm, AndroidUtilities.dp(50)));
+                }
+                else {
+                    openPhoto(drawRegion, animatingImageView, animatingLayout, null, new PlaceHolder(bm, AndroidUtilities.dp(2)));
+                }
             }
         });
 
@@ -121,15 +128,6 @@ public class MainActivity extends AppCompatActivity {
         Log.d("MyLog", "Screen Pixels: " + AndroidUtilities.displaySizePixel.x + " " + AndroidUtilities.displaySizePixel.y);
     }
 
-    public int getStatusBarHeight() {
-        int result = 0;
-        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
-        if (resourceId > 0) {
-            result = getResources().getDimensionPixelSize(resourceId);
-        }
-        return result;
-    }
-
     public class PlaceHolder {
         public int viewX;
         public int viewY;
@@ -142,9 +140,9 @@ public class MainActivity extends AppCompatActivity {
         public int clipTopAddition;
         public float scale = 1.0f;
 
-        PlaceHolder(Bitmap bitmap) {
+        PlaceHolder(Bitmap bitmap, int radius) {
             viewX = 0; viewY = 372;
-            radius = AndroidUtilities.dp(2);
+            this.radius = radius;
             thumb = bitmap;
         }
     }
@@ -252,11 +250,109 @@ public class MainActivity extends AppCompatActivity {
         animatorSet.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationStart(Animator animation) {
-                staticImageView.setVisibility(View.INVISIBLE);
+                stillImageView.setVisibility(View.INVISIBLE);
             }
         });
 
-        animatorSet.setDuration(200);
+        animatorSet.setDuration(2000);
+        animatorSet.start();
+
+    }
+
+    private void closePhoto(Rect drawRegion, final ClippingImageView animatingImageView, FrameLayout parent, Bitmap fullImage, PlaceHolder object) {
+        //Rect drawRegion = new Rect(139,11,517,223);
+        zoomIn = false;
+
+        final ViewGroup.LayoutParams layoutParams = animatingImageView.getLayoutParams();
+        layoutParams.width = (drawRegion.right - drawRegion.left);
+        layoutParams.height = (drawRegion.bottom - drawRegion.top);
+        animatingImageView.setLayoutParams(layoutParams);
+
+        float scaleX = (float) AndroidUtilities.displaySize.x / layoutParams.width;
+        float scaleY = (float) (AndroidUtilities.displaySize.y + (isStatusBar ? statusBarHeight : 0)) / layoutParams.height;
+        float scale = scaleX > scaleY ? scaleY : scaleX;
+        float width = layoutParams.width * scale;        //width  of full image
+        float height = layoutParams.height * scale;      //height of full image
+        float xPos = (AndroidUtilities.displaySize.x - width) / 2.0f;
+        float yPos = ((AndroidUtilities.displaySize.y + (isStatusBar ? statusBarHeight : 0)) - height) / 2.0f;
+//        int clipHorizontal = Math.abs(drawRegion.left - object.imageReceiver.getImageX());
+//        int clipVertical = Math.abs(drawRegion.top - object.imageReceiver.getImageY());
+
+        int coords2[] = new int[2];
+        parent.getLocationInWindow(coords2);
+        int clipTop = 0;
+        int clipBottom = 0;
+//        int clipTop = coords2[1] - (isStatusBar ? 0 : statusBarHeight) - (object.viewY + drawRegion.top) + object.clipTopAddition;
+//        if (clipTop < 0) {
+//            clipTop = 0;
+//        }
+//        int clipBottom = (object.viewY + drawRegion.top + layoutParams.height) - (coords2[1] + parent.getHeight() - (isStatusBar ? 0 : statusBarHeight)) + object.clipBottomAddition;
+//        if (clipBottom < 0) {
+//            clipBottom = 0;
+//        }
+//        clipBottom = 0;
+//        clipTop = Math.max(clipTop, clipVertical);
+//        clipBottom = Math.max(clipBottom, clipVertical);
+
+        if (drawRegion.bottom > AndroidUtilities.displaySize.y) {
+            clipBottom = drawRegion.bottom - (AndroidUtilities.displaySize.y + (isStatusBar ? statusBarHeight : 0));
+        }
+        if (drawRegion.top < 0) {
+            clipTop = -drawRegion.top + (isStatusBar ? statusBarHeight : 0);
+        }
+
+        animationValues[0][0] = animatingImageView.getScaleX();
+        animationValues[0][1] = animatingImageView.getScaleY();
+        animationValues[0][2] = animatingImageView.getTranslationX();
+        animationValues[0][3] = animatingImageView.getTranslationY();
+        animationValues[0][4] = 0;
+        animationValues[0][5] = 0;
+        animationValues[0][6] = 0;
+        animationValues[0][7] = 0;
+
+        Log.d("MyLog",  "Draw Region " + drawRegion.left + " " + drawRegion.top + " " + drawRegion.right + " " + drawRegion.bottom + " ");
+        Log.d("MyLog",  "layoutParam " + layoutParams.width + " " + layoutParams.height);
+        Log.d("MyLog",  "Clip Value "  + clipTop + " " + clipBottom);
+
+        animationValues[1][0] = 1.0f;
+        animationValues[1][1] = 1.0f;
+        animationValues[1][2] = drawRegion.left;
+        animationValues[1][3] = drawRegion.top - (isStatusBar ? statusBarHeight : 0);
+//        animationValues[0][2] = coords2[0] + animatingImageView.getLeft();
+//        animationValues[0][3] = coords2[1] + animatingImageView.getTop();
+//        animationValues[0][2] = animatingImageView.getLeft();
+//        animationValues[0][3] = animatingImageView.getTop();
+//        animationValues[0][4] = clipHorizontal * object.scale;
+        animationValues[1][5] = clipTop * object.scale;
+        animationValues[1][6] = clipBottom * object.scale;
+        animationValues[1][7] = object.radius;
+
+        animatingImageView.setAnimationProgress(0);
+//        backgroundDrawable.setAlpha(0);
+//        containerView.setAlpha(0);
+//        parent.setAlpha(0);
+
+        Log.d("MyLog", "ClipIVSize  " + animatingImageView.getLeft() + " " + animatingImageView.getTop() + " " +
+                animatingImageView.getMeasuredWidth() + " " + animatingImageView.getMeasuredHeight() + " " +
+                animatingImageView.getTranslationX() + " " + animatingImageView.getTranslationY() + " " +
+                animatingImageView.getX() + " " + animatingImageView.getY() + " " +
+                animatingImageView.getParent().toString());
+
+        final AnimatorSet animatorSet = new AnimatorSet();
+        animatorSet.playTogether(
+                ObjectAnimator.ofFloat(animatingImageView, "animationProgress", 0.0f, 1.0f),
+                ObjectAnimator.ofInt(backgroundDrawable, "alpha", 255, 0)
+//                ObjectAnimator.ofFloat(parent, "alpha", 0.0f, 1.0f)
+        );
+        animatorSet.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                animatingImageView.setVisibility(View.GONE);
+                stillImageView.setVisibility(View.VISIBLE);
+            }
+        });
+
+        animatorSet.setDuration(2000);
         animatorSet.start();
 
     }
@@ -264,35 +360,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         if (zoomIn) {
-            zoomIn = false;
-            float temp;
-            for (int i = 0; i < 8; i++) {
-                temp = animationValues[0][i];
-                animationValues[0][i] = animationValues[1][i];
-                animationValues[1][i] = temp;
-            }
-            animatingImageView.setAnimationProgress(0);
-//        backgroundDrawable.setAlpha(0);
-//        containerView.setAlpha(0);
-//        parent.setAlpha(0);
-
-            final AnimatorSet animatorSet = new AnimatorSet();
-            animatorSet.playTogether(
-                    ObjectAnimator.ofFloat(animatingImageView, "animationProgress", 0.0f, 1.0f),
-                    ObjectAnimator.ofInt(backgroundDrawable, "alpha", 255, 0)
-//                ObjectAnimator.ofFloat(parent, "alpha", 0.0f, 1.0f)
-            );
-
-            animatorSet.addListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    animatingImageView.setVisibility(View.GONE);
-                    staticImageView.setVisibility(View.VISIBLE);
-                }
-            });
-
-            animatorSet.setDuration(200);
-            animatorSet.start();
+            closePhoto(drawRegion, animatingImageView, animatingLayout, null, new PlaceHolder(null, AndroidUtilities.dp(0)));
+        }
+        else {
+            super.onBackPressed();
         }
     }
 }
