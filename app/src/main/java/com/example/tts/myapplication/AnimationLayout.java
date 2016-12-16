@@ -7,7 +7,7 @@ import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
-import android.util.Log;
+import android.os.Build;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -21,7 +21,7 @@ import static android.R.attr.orientation;
 
 public class AnimationLayout extends FrameLayout {
 
-    private static final long ANIMATION_DURATION_MS = 400;
+    private static final long ANIMATION_DURATION_MS = 1000;
 
     public interface OnEventListener {
         void onPreExpanded();
@@ -45,7 +45,7 @@ public class AnimationLayout extends FrameLayout {
     }
 
     private int statusBarHeight;
-    private boolean useOccupyStatusBar = false;
+    private boolean useOccupyStatusBar = (Build.VERSION.SDK_INT < 21);
     public void setUseOccupyStatusBar(boolean occupyStatusBar) {
         useOccupyStatusBar = occupyStatusBar;
     }
@@ -100,35 +100,31 @@ public class AnimationLayout extends FrameLayout {
         layoutParams.height = (drawRegion.bottom - drawRegion.top);
         animatingImageView.setLayoutParams(layoutParams);
 
-        float scaleX = (float) AndroidUtilities.displaySize.x / layoutParams.width;
-        float scaleY = (float) (AndroidUtilities.displaySize.y + (useOccupyStatusBar ? 0 : statusBarHeight)) / layoutParams.height;
+        float scaleX = (float) AndroidUtilities.displaySizePixel.x / layoutParams.width;
+        float scaleY = (float) (AndroidUtilities.displaySizePixel.y - (useOccupyStatusBar ? statusBarHeight : 0)) / layoutParams.height;
         float scale = scaleX > scaleY ? scaleY : scaleX;
         float width = layoutParams.width * scale;        //width  of full image
         float height = layoutParams.height * scale;      //height of full image
-        float xPos = (AndroidUtilities.displaySize.x - width) / 2.0f;
-        float yPos = ((AndroidUtilities.displaySize.y + (useOccupyStatusBar ? 0 : statusBarHeight)) - height) / 2.0f;
+        float xPos = (AndroidUtilities.displaySizePixel.x - width) / 2.0f;
+        float yPos = ((AndroidUtilities.displaySizePixel.y - (useOccupyStatusBar ? statusBarHeight : 0)) - height) / 2.0f;
 
         int clipTop = 0;
         int clipBottom = 0;
         if (drawRegion.bottom > (AndroidUtilities.displaySizePixel.y - object.clipBottomAddition)) {
             clipBottom = drawRegion.bottom - ((AndroidUtilities.displaySizePixel.y) - object.clipBottomAddition);
         }
-        if (drawRegion.top < ((useOccupyStatusBar ? statusBarHeight : 0) + object.clipTopAddition)) {
-            clipTop = -drawRegion.top + (useOccupyStatusBar ? statusBarHeight : 0) + object.clipTopAddition;
+        if (drawRegion.top < ((useOccupyStatusBar ? 0 : statusBarHeight) + object.clipTopAddition)) {
+            clipTop = -drawRegion.top + (useOccupyStatusBar ? 0 : statusBarHeight) + object.clipTopAddition;
         }
 
         animationValues[0][0] = animatingImageView.getScaleX();
         animationValues[0][1] = animatingImageView.getScaleY();
         animationValues[0][2] = animatingImageView.getTranslationX();
-        animationValues[0][3] = animatingImageView.getTranslationY() - (useOccupyStatusBar ? statusBarHeight : 0);
+        animationValues[0][3] = animatingImageView.getTranslationY()/* - (useOccupyStatusBar ? statusBarHeight : 0)*/;
 //        animationValues[0][4] = clipHorizontal * object.scale;
         animationValues[0][5] = clipTop * object.scale;
         animationValues[0][6] = clipBottom * object.scale;
         animationValues[0][7] = animatingImageView.getRadius();
-
-        Log.d("MyLog",  "Draw Region " + drawRegion.left + " " + drawRegion.top + " " + drawRegion.right + " " + drawRegion.bottom + " ");
-        Log.d("MyLog",  "layoutParam " + layoutParams.width + " " + layoutParams.height);
-        Log.d("MyLog",  "Clip Value "  + clipTop + " " + clipBottom);
 
         animationValues[1][0] = scale;
         animationValues[1][1] = scale;
@@ -142,11 +138,6 @@ public class AnimationLayout extends FrameLayout {
         animatingImageView.setAnimationProgress(0);
         backgroundDrawable.setAlpha(0);
 
-        Log.d("MyLog", "ClipIVSize  " + animatingImageView.getLeft() + " " + animatingImageView.getTop() + " " +
-                animatingImageView.getMeasuredWidth() + " " + animatingImageView.getMeasuredHeight() + " " +
-                animatingImageView.getTranslationX() + " " + animatingImageView.getTranslationY() + " " +
-                animatingImageView.getX() + " " + animatingImageView.getY() + " " +
-                animatingImageView.getParent().toString());
 
         final AnimatorSet animatorSet = new AnimatorSet();
         animatorSet.playTogether(
@@ -185,8 +176,8 @@ public class AnimationLayout extends FrameLayout {
         if (drawRegion.bottom > AndroidUtilities.displaySize.y) {
             clipBottom = drawRegion.bottom - AndroidUtilities.displaySizePixel.y + object.clipBottomAddition;
         }
-        if (drawRegion.top < ((useOccupyStatusBar ? statusBarHeight : 0) + object.clipTopAddition)) {
-            clipTop = -drawRegion.top + (useOccupyStatusBar ? statusBarHeight : 0) + object.clipTopAddition;
+        if (drawRegion.top < ((useOccupyStatusBar ? 0 : statusBarHeight) + object.clipTopAddition)) {
+            clipTop = -drawRegion.top + (useOccupyStatusBar ? 0 : statusBarHeight) + object.clipTopAddition;
         }
 
         animationValues[0][0] = animatingImageView.getScaleX();
@@ -201,19 +192,13 @@ public class AnimationLayout extends FrameLayout {
         animationValues[1][0] = object.scale;
         animationValues[1][1] = object.scale;
         animationValues[1][2] = drawRegion.left;
-        animationValues[1][3] = drawRegion.top - (useOccupyStatusBar ? statusBarHeight : 0);
+        animationValues[1][3] = drawRegion.top /*- (useOccupyStatusBar ? statusBarHeight : 0)*/;
 //        animationValues[1][4] = clipHorizontal * object.scale;
         animationValues[1][5] = clipTop * object.scale;
         animationValues[1][6] = clipBottom * object.scale;
         animationValues[1][7] = object.radius;
 
         animatingImageView.setAnimationProgress(0);
-
-        Log.d("MyLog", "ClipIVSize  " + animatingImageView.getLeft() + " " + animatingImageView.getTop() + " " +
-                animatingImageView.getMeasuredWidth() + " " + animatingImageView.getMeasuredHeight() + " " +
-                animatingImageView.getTranslationX() + " " + animatingImageView.getTranslationY() + " " +
-                animatingImageView.getX() + " " + animatingImageView.getY() + " " +
-                animatingImageView.getParent().toString());
 
         final AnimatorSet animatorSet = new AnimatorSet();
         animatorSet.playTogether(

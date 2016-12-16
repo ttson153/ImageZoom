@@ -18,7 +18,7 @@ import android.view.WindowManager;
 public class AndroidUtilities {
     public static float density = 1;
     public static boolean usingHardwareInput;
-    public static int statusBarHeight = 24;
+    public static int statusBarHeight;
     public static DisplayMetrics displayMetrics = new DisplayMetrics();
     public static Point displaySize = new Point();
     public static Point displaySizePixel = new Point();

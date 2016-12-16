@@ -8,7 +8,6 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.Shader;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 
@@ -80,7 +79,6 @@ public class ClippingImageView extends ImageView {
         setClipBottom((int) (animationValues[0][6] + (animationValues[1][6] - animationValues[0][6]) * animationProgress));
         setRadius((int) (animationValues[0][7] + (animationValues[1][7] - animationValues[0][7]) * animationProgress));
 
-        Log.d("MyLog", "clip " + clipTop + " " + clipBottom);
         //invalidate();
     }
 

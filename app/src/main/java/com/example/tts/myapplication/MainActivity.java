@@ -2,6 +2,7 @@ package com.example.tts.myapplication;
 
 import android.graphics.Bitmap;
 import android.graphics.Rect;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -10,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 
 public class MainActivity extends AppCompatActivity implements AnimationLayout.OnEventListener {
@@ -35,6 +37,13 @@ public class MainActivity extends AppCompatActivity implements AnimationLayout.O
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        if (Build.VERSION.SDK_INT >= 21) {
+            LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) (findViewById(R.id.header)).getLayoutParams();
+            params.height += AndroidUtilities.statusBarHeight;
+            (findViewById(R.id.header)).setLayoutParams(params);
+            (findViewById(R.id.header)).setPadding(0, AndroidUtilities.statusBarHeight, 0, 0);
+        }
 
         animationLayout = new AnimationLayout(this);
         animationLayout.setOnEventListener(this);
@@ -92,7 +101,7 @@ public class MainActivity extends AppCompatActivity implements AnimationLayout.O
 
     @Override
     public void onPostExpanded() {
-        animationLayout.getAnimatingImageView().setTranslationY(animationLayout.getAnimatingImageView().getTranslationY() - 150);
+//        animationLayout.getAnimatingImageView().setTranslationY(animationLayout.getAnimatingImageView().getTranslationY() - 150);
     }
 
     @Override
