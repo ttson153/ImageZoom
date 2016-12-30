@@ -21,7 +21,7 @@ import static android.R.attr.orientation;
 
 public class AnimationLayout extends FrameLayout {
 
-    private static final long ANIMATION_DURATION_MS = 1000;
+    private static final long ANIMATION_DURATION_MS = 200;
 
     public interface OnEventListener {
         void onPreExpanded();
@@ -93,15 +93,39 @@ public class AnimationLayout extends FrameLayout {
         animatingImageView.setScaleX(object.scale);
         animatingImageView.setScaleY(object.scale);
 
-        animatingImageView.setTranslationX(drawRegion.left);
-        animatingImageView.setTranslationY(drawRegion.top);
+        float thumbRatio = (float) object.thumbImage.getWidth() / object.thumbImage.getHeight();
+        float imageViewRatio = (float) drawRegion.width() / drawRegion.height();
+
         final ViewGroup.LayoutParams layoutParams = animatingImageView.getLayoutParams();
-        layoutParams.width = (drawRegion.right - drawRegion.left);
-        layoutParams.height = (drawRegion.bottom - drawRegion.top);
+        if (thumbRatio > imageViewRatio) {
+            // Zoom out to fit width
+            layoutParams.width = drawRegion.width();
+            layoutParams.height = (int) (drawRegion.width() / thumbRatio);
+            // Zoom in back fit height
+            layoutParams.width = layoutParams.width * drawRegion.height() / layoutParams.height;
+            layoutParams.height = drawRegion.height();
+        }
+        else if (thumbRatio < imageViewRatio){
+            // Zoom out to fit height
+            layoutParams.width = (int) (drawRegion.height() * thumbRatio);
+            layoutParams.height = drawRegion.height();
+            // Zoom in back fit width
+            layoutParams.height = layoutParams.height * drawRegion.width() / layoutParams.width;
+            layoutParams.width = drawRegion.width();
+        }
+        else {
+            layoutParams.width = drawRegion.width();
+            layoutParams.height = drawRegion.height();
+        }
         animatingImageView.setLayoutParams(layoutParams);
+
+        animatingImageView.setTranslationX(drawRegion.left + (drawRegion.width() - layoutParams.width) / 2);
+        animatingImageView.setTranslationY(drawRegion.top - (useOccupyStatusBar ? statusBarHeight : 0) + (drawRegion.height() - layoutParams.height) / 2);
 
         float scaleX = (float) AndroidUtilities.displaySizePixel.x / layoutParams.width;
         float scaleY = (float) (AndroidUtilities.displaySizePixel.y - (useOccupyStatusBar ? statusBarHeight : 0)) / layoutParams.height;
+//        float scaleX = (float) AndroidUtilities.displaySizePixel.x / layoutParams.width;
+//        float scaleY = (float) (AndroidUtilities.displaySizePixel.y - (useOccupyStatusBar ? statusBarHeight : 0)) / object.thumbImage.getHeight();
         float scale = scaleX > scaleY ? scaleY : scaleX;
         float width = layoutParams.width * scale;        //width  of full image
         float height = layoutParams.height * scale;      //height of full image
@@ -110,18 +134,28 @@ public class AnimationLayout extends FrameLayout {
 
         int clipTop = 0;
         int clipBottom = 0;
+        int clipHorizontal = 0;
+        int clipVertical = 0;
         if (drawRegion.bottom > (AndroidUtilities.displaySizePixel.y - object.clipBottomAddition)) {
             clipBottom = drawRegion.bottom - ((AndroidUtilities.displaySizePixel.y) - object.clipBottomAddition);
         }
-        if (drawRegion.top < ((useOccupyStatusBar ? 0 : statusBarHeight) + object.clipTopAddition)) {
-            clipTop = -drawRegion.top + (useOccupyStatusBar ? 0 : statusBarHeight) + object.clipTopAddition;
+        if (drawRegion.top < (statusBarHeight + object.clipTopAddition)) {
+            clipTop = -drawRegion.top + statusBarHeight + object.clipTopAddition;
         }
+        if (thumbRatio > imageViewRatio) {
+            clipHorizontal = (layoutParams.width - drawRegion.width()) / 2;
+        }
+        else if (thumbRatio < imageViewRatio) {
+            clipVertical = (layoutParams.height - drawRegion.height()) / 2;
+        }
+        clipTop += clipVertical;
+        clipBottom += clipVertical;
 
         animationValues[0][0] = animatingImageView.getScaleX();
         animationValues[0][1] = animatingImageView.getScaleY();
         animationValues[0][2] = animatingImageView.getTranslationX();
         animationValues[0][3] = animatingImageView.getTranslationY()/* - (useOccupyStatusBar ? statusBarHeight : 0)*/;
-//        animationValues[0][4] = clipHorizontal * object.scale;
+        animationValues[0][4] = clipHorizontal * object.scale;
         animationValues[0][5] = clipTop * object.scale;
         animationValues[0][6] = clipBottom * object.scale;
         animationValues[0][7] = animatingImageView.getRadius();
@@ -166,34 +200,65 @@ public class AnimationLayout extends FrameLayout {
         animating = true;
         bringToFront();
 
+        float thumbRatio = (float) object.thumbImage.getWidth() / object.thumbImage.getHeight();
+        float imageViewRatio = (float) drawRegion.width() / drawRegion.height();
+
         final ViewGroup.LayoutParams layoutParams = animatingImageView.getLayoutParams();
-        layoutParams.width = (drawRegion.right - drawRegion.left);
-        layoutParams.height = (drawRegion.bottom - drawRegion.top);
+        if (thumbRatio > imageViewRatio) {
+            // Zoom out to fit width
+            layoutParams.width = drawRegion.width();
+            layoutParams.height = (int) (drawRegion.width() / thumbRatio);
+            // Zoom in back fit height
+            layoutParams.width = layoutParams.width * drawRegion.height() / layoutParams.height;
+            layoutParams.height = drawRegion.height();
+        }
+        else if (thumbRatio < imageViewRatio){
+            // Zoom out to fit height
+            layoutParams.width = (int) (drawRegion.height() * thumbRatio);
+            layoutParams.height = drawRegion.height();
+            // Zoom in back fit width
+            layoutParams.height = layoutParams.height * drawRegion.width() / layoutParams.width;
+            layoutParams.width = drawRegion.width();
+        }
+        else {
+            layoutParams.width = drawRegion.width();
+            layoutParams.height = drawRegion.height();
+        }
         animatingImageView.setLayoutParams(layoutParams);
 
         int clipTop = 0;
         int clipBottom = 0;
+        int clipHorizontal = 0;
+        int clipVertical = 0;
         if (drawRegion.bottom > AndroidUtilities.displaySize.y) {
             clipBottom = drawRegion.bottom - AndroidUtilities.displaySizePixel.y + object.clipBottomAddition;
         }
-        if (drawRegion.top < ((useOccupyStatusBar ? 0 : statusBarHeight) + object.clipTopAddition)) {
-            clipTop = -drawRegion.top + (useOccupyStatusBar ? 0 : statusBarHeight) + object.clipTopAddition;
+        if (drawRegion.top < (statusBarHeight + object.clipTopAddition)) {
+            clipTop = -drawRegion.top + statusBarHeight + object.clipTopAddition;
         }
+        if (thumbRatio > imageViewRatio) {
+            clipHorizontal = (layoutParams.width - drawRegion.width()) / 2;
+        }
+        else if (thumbRatio < imageViewRatio) {
+            clipVertical = (layoutParams.height - drawRegion.height()) / 2;
+        }
+        clipTop += clipVertical;
+        clipBottom += clipVertical;
 
         animationValues[0][0] = animatingImageView.getScaleX();
         animationValues[0][1] = animatingImageView.getScaleY();
         animationValues[0][2] = animatingImageView.getTranslationX();
         animationValues[0][3] = animatingImageView.getTranslationY();
-//        animationValues[0][4] = 0;
+        animationValues[0][4] = 0;
         animationValues[0][5] = 0;
         animationValues[0][6] = 0;
         animationValues[0][7] = 0;
 
         animationValues[1][0] = object.scale;
         animationValues[1][1] = object.scale;
-        animationValues[1][2] = drawRegion.left;
-        animationValues[1][3] = drawRegion.top /*- (useOccupyStatusBar ? statusBarHeight : 0)*/;
-//        animationValues[1][4] = clipHorizontal * object.scale;
+        animationValues[1][2] = drawRegion.left + (drawRegion.width() - layoutParams.width) / 2;
+        animationValues[1][3] = drawRegion.top - (useOccupyStatusBar ? statusBarHeight : 0) + (drawRegion.height() - layoutParams.height) / 2;
+        animationValues[1][4] = clipHorizontal * object.scale;
         animationValues[1][5] = clipTop * object.scale;
         animationValues[1][6] = clipBottom * object.scale;
         animationValues[1][7] = object.radius;
@@ -214,5 +279,22 @@ public class AnimationLayout extends FrameLayout {
 
         animatorSet.setDuration(mAnimDuration);
         animatorSet.start();
+    }
+
+    public void onOrientationChanged() {
+        ViewGroup.LayoutParams params = animatingImageView.getLayoutParams();
+
+        float scaleX = (float) AndroidUtilities.displaySizePixel.x / params.width;
+        float scaleY = (float) (AndroidUtilities.displaySizePixel.y - (useOccupyStatusBar ? statusBarHeight : 0)) / params.height;
+        float scale = scaleX > scaleY ? scaleY : scaleX;
+        float width = params.width * scale;        //width  of full image
+        float height = params.height * scale;      //height of full image
+        float xPos = (AndroidUtilities.displaySizePixel.x - width) / 2.0f;
+        float yPos = ((AndroidUtilities.displaySizePixel.y - (useOccupyStatusBar ? statusBarHeight : 0)) - height) / 2.0f;
+
+        animatingImageView.setTranslationX(xPos);
+        animatingImageView.setTranslationY(yPos);
+        animatingImageView.setScaleX(scale);
+        animatingImageView.setScaleY(scale);
     }
 }

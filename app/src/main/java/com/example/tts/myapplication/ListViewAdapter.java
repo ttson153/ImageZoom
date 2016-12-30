@@ -3,6 +3,12 @@ package com.example.tts.myapplication;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.support.annotation.NonNull;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,11 +33,33 @@ public class ListViewAdapter extends ArrayAdapter<String> {
         this.imageId = imageId;
     }
 
+    private Bitmap getRoundedCornerBitmap(Bitmap bitmap, int pixels) {
+        Bitmap output = Bitmap.createBitmap(bitmap.getWidth(), bitmap
+                .getHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(output);
+
+        final int color = 0xff424242;
+        final Paint paint = new Paint();
+        final Rect rect = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+        final RectF rectF = new RectF(rect);
+
+        paint.setAntiAlias(true);
+        canvas.drawARGB(0, 0, 0, 0);
+        paint.setColor(color);
+        canvas.drawRoundRect(rectF, pixels, pixels, paint);
+
+        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
+        canvas.drawBitmap(bitmap, rect, rect, paint);
+
+        return output;
+    }
+
     @NonNull
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         FrameLayout cell = new FrameLayout(MyApplication.getAppContext());
         ImageView imageView = new ImageView(MyApplication.getAppContext());
+        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
 
         Bitmap imgPreview = BitmapFactory.decodeResource(context.getResources(), imageId[position]);
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(0, 0);
@@ -58,7 +86,7 @@ public class ListViewAdapter extends ArrayAdapter<String> {
         else {
             // square
             imageView.setTranslationX(AndroidUtilities.displaySize.x - (previewHeight + AndroidUtilities.dp(5)));
-            imageView.setImageBitmap(imgPreview);
+            imageView.setImageBitmap(getRoundedCornerBitmap(imgPreview, previewHeight * 2));
             params.width = previewHeight;
             params.height = previewHeight;
             params.topMargin = 5;
