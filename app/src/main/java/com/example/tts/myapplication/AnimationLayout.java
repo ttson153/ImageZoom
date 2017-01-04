@@ -14,7 +14,6 @@ import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 
 import static android.R.attr.orientation;
-import static android.R.attr.translationY;
 
 /**
  * Created by tts on 12/13/16.
@@ -43,6 +42,10 @@ public class AnimationLayout extends FrameLayout {
 
     public ClippingImageView getAnimatingImageView() {
         return animatingImageView;
+    }
+
+    public ColorDrawable getBackgroundDrawable() {
+        return backgroundDrawable;
     }
 
     private int statusBarHeight;
@@ -198,8 +201,8 @@ public class AnimationLayout extends FrameLayout {
 
     public void shrink(Rect drawRegion, TransformData object) {
         final AnimatorSet animatorSet = new AnimatorSet();
+        isExpanded = false;
         if (drawRegion != null) {
-            isExpanded = false;
             animating = true;
             bringToFront();
 
@@ -267,7 +270,8 @@ public class AnimationLayout extends FrameLayout {
 
             animatorSet.playTogether(
                     ObjectAnimator.ofFloat(animatingImageView, "animationProgress", 0.0f, 1.0f),
-                    ObjectAnimator.ofInt(backgroundDrawable, "alpha", 255, 0)
+//                    ObjectAnimator.ofInt(backgroundDrawable, "alpha", backgroundDrawable.getAlpha(), 0)
+                    ObjectAnimator.ofInt(backgroundDrawable, "alpha", 0)
             );
         }
         else {
@@ -275,7 +279,7 @@ public class AnimationLayout extends FrameLayout {
             animatorSet.playTogether(
                     ObjectAnimator.ofInt(backgroundDrawable, "alpha", 0),
                     ObjectAnimator.ofFloat(animatingImageView, "alpha", 0.0f),
-                    ObjectAnimator.ofFloat(animatingImageView, "translationY", translationY >= 0 ? h : -h)
+                    ObjectAnimator.ofFloat(animatingImageView, "translationY", (animatingImageView.getTranslationY()) >= 0 ? h : -h)
             );
 
         }
