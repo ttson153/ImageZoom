@@ -6,12 +6,14 @@ import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Parcelable;
+import android.os.PersistableBundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -31,8 +33,12 @@ public class MainActivity extends AppCompatActivity implements AnimationLayout.O
             R.drawable.pano_landscape,
     };
 
-    private ListView list;
+    public static final String LIST_STATE_KEY = "recycler_list_state";
+    Parcelable mListState;
+
+    private RecyclerView mRecyclerView;
     private RecyclerView.LayoutManager mLayoutManager;
+    private RecyclerViewAdapter adapter;
 
     private ImageView currentImageView;
     private int currentPosition;
@@ -72,16 +78,17 @@ public class MainActivity extends AppCompatActivity implements AnimationLayout.O
         ((FrameLayout) findViewById(R.id.main_frame_layout))
                 .addView(animationLayout, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
-        ListViewAdapter adapter = new ListViewAdapter(this, imageId);
-        list = (ListView) findViewById(R.id.list);
-//        list.setHasFixedSize(true);
-//        mLayoutManager = new LinearLayoutManager(this);
-//        list.setLayoutManager(mLayoutManager);
+        adapter = new RecyclerViewAdapter(this, imageId);
+        mRecyclerView = (RecyclerView) findViewById(R.id.list);
+//        mRecyclerView.setHasFixedSize(true);
+        mLayoutManager = new LinearLayoutManager(this);
+        mRecyclerView.setLayoutManager(mLayoutManager);
+        mRecyclerView.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL));
 
-        list.setAdapter(adapter);
-        list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        mRecyclerView.setAdapter(adapter);
+        mRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), mRecyclerView, new RecyclerTouchListener.ClickListener() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+            public void onClick(View view, int position) {
                 currentPosition = position;
                 currentImageView = (ImageView) ((FrameLayout) view).getChildAt(0);
                 currentImageView.getLocationInWindow(imgViewLocation);
@@ -112,43 +119,78 @@ public class MainActivity extends AppCompatActivity implements AnimationLayout.O
 
                 animationLayout.expand(drawRegion, currentPlaceHolder);
             }
-        });
+
+            @Override
+            public void onLongClick(View view, int position) {
+
+            }
+        }));
     }
 
     @Override
     public void onBackPressed() {
         if (animationLayout.isExpanded()) {
-            currentImageView = (ImageView) ((FrameLayout) getViewAtPosition(currentPosition, list)).getChildAt(0);
-            currentImageView.getLocationInWindow(imgViewLocation);
-            int left = imgViewLocation[0];
-            int top = imgViewLocation[1];
-            int right = left + currentImageView.getWidth();
-            int bottom = top + currentImageView.getHeight();
-            drawRegion = new Rect(left, top, right, bottom);
+            RecyclerViewAdapter.ViewHolder curr = (RecyclerViewAdapter.ViewHolder) mRecyclerView.findViewHolderForAdapterPosition(currentPosition);
+            if (curr != null) {
+                currentImageView = curr.mImageView;
+                currentImageView.getLocationInWindow(imgViewLocation);
+                int left = imgViewLocation[0];
+                int top = imgViewLocation[1];
+                int right = left + currentImageView.getWidth();
+                int bottom = top + currentImageView.getHeight();
+                drawRegion = new Rect(left, top, right, bottom);
 
-            Bitmap bm = BitmapFactory.decodeResource(getResources(), imageId[currentPosition]);
+                Bitmap bm = BitmapFactory.decodeResource(getResources(), imageId[currentPosition]);
 
-            ViewGroup.LayoutParams params = currentImageView.getLayoutParams();
+                ViewGroup.LayoutParams params = currentImageView.getLayoutParams();
 
-            if (currentPosition == 4) {
-                currentPlaceHolder = new TransformData()
-                        .setThumbImage(bm)
-                        .setRadius(params.width / 2)
-                        .setClipTopAddition(clipTopAddition)
-                        .setClipBottomAddition(clipBottomAddition);
+                if (currentPosition == 4) {
+                    currentPlaceHolder = new TransformData()
+                            .setThumbImage(bm)
+                            .setRadius(params.width / 2)
+                            .setClipTopAddition(clipTopAddition)
+                            .setClipBottomAddition(clipBottomAddition);
+                } else {
+                    currentPlaceHolder = new TransformData()
+                            .setThumbImage(bm)
+                            .setClipTopAddition(clipTopAddition)
+                            .setClipBottomAddition(clipBottomAddition);
+                }
+//                currentImageView.setVisibility(View.INVISIBLE);
             }
             else {
-                currentPlaceHolder = new TransformData()
-                        .setThumbImage(bm)
-                        .setClipTopAddition(clipTopAddition)
-                        .setClipBottomAddition(clipBottomAddition);
+                drawRegion = null;
+                currentPlaceHolder = null;
             }
 
-            currentImageView.setVisibility(View.INVISIBLE);
             animationLayout.shrink(drawRegion, currentPlaceHolder);
         }
         else {
             super.onBackPressed();
+        }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState, PersistableBundle outPersistentState) {
+        super.onSaveInstanceState(outState, outPersistentState);
+        // Save list state
+        mListState = mLayoutManager.onSaveInstanceState();
+        outState.putParcelable(LIST_STATE_KEY, mListState);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        if (savedInstanceState != null) {
+            mListState = savedInstanceState.getParcelable(LIST_STATE_KEY);
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (mListState != null) {
+            mLayoutManager.onRestoreInstanceState(mListState);
         }
     }
 
@@ -179,6 +221,7 @@ public class MainActivity extends AppCompatActivity implements AnimationLayout.O
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         AndroidUtilities.checkDisplaySize(this, newConfig);
+        adapter.notifyDataSetChanged();
         animationLayout.onOrientationChanged();
     }
 }
