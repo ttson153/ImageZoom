@@ -39,7 +39,7 @@ public class MainActivity extends AppCompatActivity implements AnimationLayout.O
             R.drawable.pano_landscape,
     };
 
-    final float DELTA_Y_THRESH = AndroidUtilities.dp(100);
+    final float DELTA_Y_THRESH = AndroidUtilities.dp(150);
     float startingY, deltaY, animatingImageViewOriginY;
 
     private View.OnTouchListener animatingImageViewTouchListener = new View.OnTouchListener() {
@@ -63,7 +63,9 @@ public class MainActivity extends AppCompatActivity implements AnimationLayout.O
                         }
                         else {
                             AnimatorSet animatorSet = new AnimatorSet();
-                            animatorSet.play(ObjectAnimator.ofFloat(animationLayout.getAnimatingImageView(), "translationY", animatingImageViewOriginY));
+                            animatorSet.playTogether(
+                                    ObjectAnimator.ofFloat(animationLayout.getAnimatingImageView(), "translationY", animatingImageViewOriginY),
+                                    ObjectAnimator.ofInt(animationLayout.getBackgroundDrawable(), "alpha", 255));
                             animatorSet.setDuration(200).start();
                         }
                         break;
