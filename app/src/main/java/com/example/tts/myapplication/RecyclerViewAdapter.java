@@ -22,7 +22,7 @@ import android.widget.ImageView;
 
 public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder> {
     private final Activity context;
-    private final Integer[] imageId;
+    private final int[] imageId;
 
     private int previewWidth = AndroidUtilities.dp(250);
     private int previewHeight = AndroidUtilities.dp(140);
@@ -38,7 +38,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         }
     }
 
-    public RecyclerViewAdapter(Activity context, Integer[] imageId) {
+    public RecyclerViewAdapter(Activity context, int[] imageId) {
         this.context = context;
         this.imageId = imageId;
     }
