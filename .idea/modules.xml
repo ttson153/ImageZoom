@@ -5,6 +5,7 @@
       <module fileurl="file://$PROJECT_DIR$/ImageZoom.iml" filepath="$PROJECT_DIR$/ImageZoom.iml" />
       <module fileurl="file://$PROJECT_DIR$/MyApplication.iml" filepath="$PROJECT_DIR$/MyApplication.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libimagezoomanim/libimagezoomanim.iml" filepath="$PROJECT_DIR$/libimagezoomanim/libimagezoomanim.iml" />
     </modules>
   </component>
 </project>

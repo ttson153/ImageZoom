@@ -5,6 +5,10 @@ import android.animation.ObjectAnimator;
 import android.view.MotionEvent;
 import android.view.View;
 
+import com.tts.libimagezoomanim.AndroidUtilities;
+import com.tts.libimagezoomanim.AnimationController;
+import com.tts.libimagezoomanim.AnimationLayout;
+
 import static android.view.MotionEvent.ACTION_DOWN;
 import static android.view.MotionEvent.ACTION_MOVE;
 import static android.view.MotionEvent.ACTION_UP;
@@ -14,11 +18,12 @@ import static android.view.MotionEvent.ACTION_UP;
  */
 
 public class FullScreenImageTouchListener implements View.OnTouchListener {
-    final float DELTA_Y_THRESH = AndroidUtilities.dp(150);
+    public static final float DELTA_Y_THRESH = AndroidUtilities.dp(150);
 
     private AnimationLayout mAnimationLayout;
     private AnimationController mAnimationController;
-    float startingY, deltaY, animatingImageViewOriginY;
+    float startingX, startingY, deltaX, deltaY, animatingImageViewOriginX, animatingImageViewOriginY;
+    boolean locked, lockedX;
 
     public FullScreenImageTouchListener() {
 
@@ -45,12 +50,29 @@ public class FullScreenImageTouchListener implements View.OnTouchListener {
             switch (event.getAction()) {
                 case ACTION_DOWN:
                     startingY = event.getY();
+                    startingX = event.getX();
                     animatingImageViewOriginY = mAnimationLayout.getAnimatingImageView().getTranslationY();
+                    animatingImageViewOriginX = mAnimationLayout.getAnimatingImageView().getTranslationX();
+                    locked = false;
+                    lockedX = false;
                     break;
                 case ACTION_MOVE:
                     deltaY = event.getY() - startingY;
-                    mAnimationLayout.getAnimatingImageView().setTranslationY(animatingImageViewOriginY + deltaY);
-                    mAnimationLayout.getBackgroundDrawable().setAlpha(255 - Math.abs(255 * (int) deltaY / AndroidUtilities.displaySizePixel.y));
+                    deltaX = event.getX() - startingX;
+                    if (!locked) {
+                        lockedX = (Math.abs(deltaY) <= Math.abs(deltaX));
+                        locked  = true;
+                    } else {
+                        if (!lockedX) {
+                            // process swiping up/down
+                            mAnimationLayout.getAnimatingImageView().setTranslationY(animatingImageViewOriginY + deltaY);
+                            mAnimationLayout.getBackgroundDrawable().setAlpha(255 - Math.abs(255 * (int) deltaY / AndroidUtilities.displaySizePixel.y));
+                        } else {
+                            // process swiping left/right
+//                            mAnimationLayout.getAnimatingImageView().setTranslationX(animatingImageViewOriginX + deltaX);
+//                            mAnimationLayout.getBackgroundDrawable().setAlpha(255 - Math.abs(255 * (int) deltaX / AndroidUtilities.displaySizePixel.x));
+                        }
+                    }
                     break;
                 case ACTION_UP:
                     if (Math.abs(event.getY() - startingY) > DELTA_Y_THRESH) {

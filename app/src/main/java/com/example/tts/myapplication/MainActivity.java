@@ -1,6 +1,8 @@
 package com.example.tts.myapplication;
 
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -13,6 +15,11 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+
+import com.tts.libimagezoomanim.AndroidUtilities;
+import com.tts.libimagezoomanim.AnimationController;
+import com.tts.libimagezoomanim.AnimationLayout;
+import com.tts.libimagezoomanim.TransformData;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -29,11 +36,14 @@ public class MainActivity extends AppCompatActivity {
     public static final String LIST_STATE_KEY = "recycler_list_state";
     Parcelable mListState;
 
+    public static final int clipBottomAddition = AndroidUtilities.dp(0);
+    public static final int clipTopAddition    = AndroidUtilities.dp(56);
+
     private RecyclerView mRecyclerView;
     private RecyclerView.LayoutManager mLayoutManager;
     private RecyclerViewAdapter adapter;
 
-    private AnimationLayout     animationLayout;
+    private AnimationLayout animationLayout;
     private AnimationController animationController;
 
     private View getViewAtPosition(int pos, ListView listView) {
@@ -73,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Animation Controller
         animationController = new AnimationController(this);
-        animationController.setInfo(animationLayout, mRecyclerView, imageId);
+        animationController.setAnimationLayout(animationLayout);
         animationLayout.setOnEventListener(animationController);
 
         // Image swipe processor
@@ -88,7 +98,21 @@ public class MainActivity extends AppCompatActivity {
         mRecyclerView.addOnItemTouchListener(new RecyclerTouchListener(getApplicationContext(), mRecyclerView, new RecyclerTouchListener.ClickListener() {
             @Override
             public void onClick(View view, int position) {
-                animationController.openPhoto(view, position);
+                View imgView = ((FrameLayout) view).getChildAt(0);
+
+                // generate data for animation
+                //TODO more efficient way to access image view's bitmap
+                Bitmap bm = BitmapFactory.decodeResource(getResources(), imageId[position]);
+                ViewGroup.LayoutParams params = imgView.getLayoutParams();
+                TransformData data = new TransformData()
+                        .setThumbImage(bm)
+                        .setClipTopAddition(clipTopAddition)
+                        .setClipBottomAddition(clipBottomAddition);
+                if (position == RecyclerViewAdapter.CIRCLE_IMAGE_POSITION) {
+                    data.setRadius(params.width / 2);
+                }
+
+                animationController.openPhoto(imgView, data);
             }
 
             @Override

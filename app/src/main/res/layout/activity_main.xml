@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.example.tts.myapplication.InsetsLayout
+<com.tts.libimagezoomanim.InsetsLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main_frame_layout"
@@ -36,4 +36,4 @@
         </android.support.v7.widget.RecyclerView>
     </LinearLayout>
 
-</com.example.tts.myapplication.InsetsLayout>
+</com.tts.libimagezoomanim.InsetsLayout>

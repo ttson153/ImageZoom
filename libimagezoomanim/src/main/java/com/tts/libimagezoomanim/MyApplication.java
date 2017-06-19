@@ -1,4 +1,4 @@
-package com.example.tts.myapplication;
+package com.tts.libimagezoomanim;
 
 import android.app.Application;
 import android.content.Context;
