@@ -1,4 +1,6 @@
 apply plugin: 'com.android.library'
+apply plugin: 'com.jfrog.bintray'
+apply plugin: 'com.github.dcendents.android-maven'
 
 android {
     compileSdkVersion 25
@@ -19,6 +21,53 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+}
+
+group = 'com.tts.libimagezoomanim'
+version = '1.0.0'
+
+task generateSourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier 'sources'
+}
+
+
+task generateJavadocs(type: Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+}
+
+task generateJavadocsJar(type: Jar) {
+    from generateJavadocs.destinationDir
+    classifier 'javadoc'
+}
+
+generateJavadocsJar.dependsOn generateJavadocs
+
+artifacts {
+    archives generateJavadocsJar
+    archives generateSourcesJar
+}
+
+bintray {
+    user = 'ttson153'
+    key = 'f6be0b70f8002db636a050c1961fb9f94e80794b'
+    pkg {
+        repo = 'maven'
+        name = 'imageview-expand-animation'
+
+        version {
+            name = '1.0.0'
+            desc = 'My test upload'
+            released  = new Date()
+            vcsTag = '1.0.0'
+        }
+
+        licenses = ['MIT']
+        vcsUrl = 'https://github.com/ttson153/ImageZoom.git'
+        websiteUrl = 'https://github.com/ttson153/ImageZoom'
+    }
+    configurations = ['archives']
 }
 
 dependencies {
